@@ -5,6 +5,9 @@ const config = {
   eventName: "Roskilde Festival 2025 - One-Day Ticket, Friday",
 };
 
+const requestCookie =
+  "eps_sid=b7527c16a8c40017eb7a59486c71ec364041496d;tmpt=0:00091c47be000000:1750968540:86fb5d02:e634f97a75da87a4e611bd6caaae74ea:490e6359787e7fbcf28ccf30f77386f3db8258bcbe99ec2caaa0387de9414dbd;";
+
 const ntfyTopic = "nt-rf";
 
 const checkForTickets = async () => {
@@ -13,10 +16,7 @@ const checkForTickets = async () => {
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${config.eventId}`;
 
-  const headers = new Headers({
-    Cookie:
-      "eps_sid=b7527c16a8c40017eb7a59486c71ec364041496d;tmpt=0:c1bd357bbe000000:1750855624:ab5b3824:01691fe117d0816f44f95a25c823ea41:f76ec1290039b5788f9af3514dd8e1eff64adfc3485fb3e0d08a6ecf9bdf33f6",
-  });
+  const headers = new Headers({ Cookie: requestCookie });
 
   const response = await fetch(url, {
     method: "GET",

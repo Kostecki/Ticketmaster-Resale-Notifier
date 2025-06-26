@@ -3,7 +3,6 @@ const path = require("path");
 
 const stateFilePath = path.join(__dirname, "notifiedOffers.json");
 
-// Create file with empty array if it does not exist
 if (!fs.existsSync(stateFilePath)) {
   try {
     fs.writeFileSync(stateFilePath, "[]", "utf8");
@@ -126,9 +125,6 @@ const sendErrorNotification = (error) => {
 checkForTickets()
   .then((data) => {
     if (data.offers.length > 0) {
-      console.log(JSON.stringify(data));
-      console.log();
-
       const newOffers = data.offers.filter(
         (offer) => !notifiedOfferIds.has(offer.id)
       );

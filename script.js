@@ -8,7 +8,8 @@ const config = {
 const ntfyTopic = "nt-rf";
 
 const checkForTickets = async () => {
-  console.log("Fetching data for event:", config.eventName + "\n");
+  console.log("Fetching data for event:", config.eventName);
+  console.log();
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${config.eventId}`;
 
@@ -80,7 +81,8 @@ checkForTickets()
       console.log(JSON.stringify(data));
       console.log();
 
-      console.log("TICKETS AVAILABLE?!" + "\n");
+      console.log("TICKETS AVAILABLE?!");
+      console.log();
       sendSuccessNotification();
     } else {
       console.log("NO TICKETS AVAILABLE");

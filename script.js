@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
+// File handling
 const stateFilePath = path.join(__dirname, "notifiedOffers.json");
 
 if (!fs.existsSync(stateFilePath)) {
@@ -21,17 +22,31 @@ try {
 } catch (error) {
   console.error("Error reading state file:", error);
 }
-const config = {
-  eventId: "555893",
-  eventUrl:
-    "https://www.ticketmaster.dk/event/roskilde-festival-2025-one-day-ticket-friday-billetter/555893",
-  eventName: "Roskilde Festival 2025 - One-Day Ticket, Friday",
-};
+
+// Command line arguments
+const args = process.argv.slice(2);
+const params = {};
+
+args.forEach((arg) => {
+  const [key, value] = arg.split("=");
+  if (key && value) {
+    params[key.replace(/^--/, "")] = value;
+  }
+});
+
+const eventId = params.eventId;
+const eventName = params.eventName;
+const eventUrl = `https://www.ticketmaster.dk/event/${eventId}`;
+
+const ntfyTopic = "nt-rf";
+
+if (!eventId || !eventName) {
+  console.error("Missing required parameters: --eventId and --eventName");
+  process.exit(1);
+}
 
 const requestCookie =
   "eps_sid=b7527c16a8c40017eb7a59486c71ec364041496d;tmpt=0:00091c47be000000:1750968540:86fb5d02:e634f97a75da87a4e611bd6caaae74ea:490e6359787e7fbcf28ccf30f77386f3db8258bcbe99ec2caaa0387de9414dbd;";
-
-const ntfyTopic = "nt-rf";
 
 const saveNotifiedIds = () => {
   fs.writeFileSync(
@@ -42,10 +57,10 @@ const saveNotifiedIds = () => {
 };
 
 const checkForTickets = async () => {
-  console.log("Fetching data for event:", config.eventName);
+  console.log("Fetching data for event:", eventName);
   console.log();
 
-  const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${config.eventId}`;
+  const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${eventId}`;
 
   const headers = new Headers({ Cookie: requestCookie });
 
@@ -81,12 +96,12 @@ const sendSuccessNotification = (offers) => {
     body: JSON.stringify({
       topic: ntfyTopic,
       title,
-      message: config.eventName,
+      message: eventName,
       actions: [
         {
           action: "view",
           label: "Køb for helvede!",
-          url: config.eventUrl,
+          url: eventUrl,
         },
       ],
     }),
@@ -115,7 +130,7 @@ const sendErrorNotification = (error) => {
     body: JSON.stringify({
       topic: ntfyTopic,
       title: "Error checking tickets",
-      message: `An error occurred while checking tickets for "${config.eventName}".\n\n${error}`,
+      message: `An error occurred while checking tickets for "${eventName}".\n\n${error}`,
     }),
   }).catch((error) => {
     console.error("Error sending error notification:", error);

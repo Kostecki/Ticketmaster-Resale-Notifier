@@ -1,0 +1,76 @@
+{
+  "groups": [
+    {
+      "offerIds": [
+        "KJ6GYZDINRXGG2RTGU"
+      ],
+      "sections": {
+        "OD-": {
+          "placeCount": 1
+        }
+      },
+      "generalAdmission": true
+    },
+    {
+      "offerIds": [
+        "KJ6GY4LSG4ZHC3TM"
+      ],
+      "sections": {
+        "OD-": {
+          "placeCount": 1
+        }
+      },
+      "generalAdmission": true
+    }
+  ],
+  "offers": [
+    {
+      "id": "KJ6GYZDINRXGG2RTGU",
+      "listingId": "ldhlncj35",
+      "limit": {
+        "max": 1,
+        "min": 1,
+        "multiple": 1
+      },
+      "price": {
+        "total": 148960,
+        "original": 133000,
+        "commission": 15960
+      },
+      "sellerInformation": {
+        "businessType": "private",
+        "affiliationType": "unaffiliated"
+      },
+      "restrictions": [],
+      "quantities": [
+        1
+      ],
+      "offerTypeDescription": "One-Day Ticket, Friday - including fee",
+      "type": "resale"
+    },
+    {
+      "id": "KJ6GY4LSG4ZHC3TM",
+      "listingId": "lqr72qnl",
+      "limit": {
+        "max": 1,
+        "min": 1,
+        "multiple": 1
+      },
+      "price": {
+        "total": 148960,
+        "original": 133000,
+        "commission": 15960
+      },
+      "sellerInformation": {
+        "businessType": "private",
+        "affiliationType": "unaffiliated"
+      },
+      "restrictions": [],
+      "quantities": [
+        1
+      ],
+      "offerTypeDescription": "One-Day Ticket, Friday - including fee",
+      "type": "resale"
+    }
+  ]
+}

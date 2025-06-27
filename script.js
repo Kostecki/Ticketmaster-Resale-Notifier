@@ -37,11 +37,18 @@ args.forEach((arg) => {
 const eventId = params.eventId;
 const eventName = params.eventName;
 const eventUrl = `https://www.ticketmaster.dk/event/${eventId}`;
+const ntfyUrlFull = params.ntfyUrl;
 
-const ntfyTopic = "nt-rf";
+if (!eventId || !eventName || !ntfyUrlFull) {
+  console.error("Missing required parameters: eventId, eventName or ntfyUrl");
+  process.exit(1);
+}
 
-if (!eventId || !eventName) {
-  console.error("Missing required parameters: --eventId and --eventName");
+const ntfyUrl = new URL(ntfyUrlFull).origin;
+const ntfyTopic = new URL(ntfyUrlFull).pathname.split("/").filter(Boolean)[0];
+
+if (!ntfyTopic) {
+  console.error("Invalid ntfyUrl. Please provide a valid URL with a topic.");
   process.exit(1);
 }
 
@@ -57,7 +64,9 @@ const saveNotifiedIds = () => {
 };
 
 const checkForTickets = async () => {
-  console.log("Fetching data for event:", eventName);
+  console.log("Ntfy URL:", ntfyUrl);
+  console.log("Ntfy Topic:", ntfyTopic);
+  console.log(`Fetching data for event: ${eventName} (${eventId})`);
   console.log();
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${eventId}`;
@@ -88,7 +97,7 @@ const sendSuccessNotification = (offers) => {
     totalTickets === 1 ? "" : "TER"
   } TIL SALG?!`;
 
-  fetch("https://ntfy.israndom.win", {
+  fetch(ntfyUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -122,7 +131,7 @@ const sendSuccessNotification = (offers) => {
 const sendErrorNotification = (error) => {
   console.log("Sending error notification...");
 
-  fetch("https://ntfy.israndom.win", {
+  fetch(ntfyUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

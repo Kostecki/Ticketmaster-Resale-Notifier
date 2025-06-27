@@ -65,9 +65,8 @@ const saveNotifiedIds = () => {
 
 const checkForTickets = async () => {
   console.log("Ntfy URL:", ntfyUrl);
-  console.log("Ntfy Topic:", ntfyTopic);
-  console.log(`Fetching data for event: ${eventName} (${eventId})`);
-  console.log();
+  console.log("Ntfy Topic:", ntfyTopic + "\n");
+  console.log(`Fetching data for event: ${eventName} (${eventId})` + "\n");
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${eventId}`;
 

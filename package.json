@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "name": "ticketmaster-resale-notifier",
+  "version": "1.0.0",
+  "description": "A script to monitor Ticketmaster resale tickets",
+  "main": "script.js",
+  "scripts": {
+    "start": "node script.js"
+  }
+}

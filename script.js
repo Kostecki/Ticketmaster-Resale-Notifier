@@ -1,8 +1,22 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import { open } from "node:fs/promises";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-// File handling
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const stateFilePath = path.join(__dirname, "notifiedOffers.json");
+
+// Read full cookie from file
+const cookieString = await (async () => {
+  const fileHandle = await open(path.join(__dirname, "cookie.txt"), "r");
+  try {
+    return await fileHandle.readFile({ encoding: "utf8" });
+  } finally {
+    await fileHandle.close();
+  }
+})();
 
 if (!fs.existsSync(stateFilePath)) {
   try {
@@ -52,9 +66,6 @@ if (!ntfyTopic) {
   process.exit(1);
 }
 
-const requestCookie =
-  "eps_sid=b7527c16a8c40017eb7a59486c71ec364041496d;tmpt=0:00091c47be000000:1750968540:86fb5d02:e634f97a75da87a4e611bd6caaae74ea:490e6359787e7fbcf28ccf30f77386f3db8258bcbe99ec2caaa0387de9414dbd;";
-
 const saveNotifiedIds = () => {
   fs.writeFileSync(
     stateFilePath,
@@ -65,12 +76,12 @@ const saveNotifiedIds = () => {
 
 const checkForTickets = async () => {
   console.log("Ntfy URL:", ntfyUrl);
-  console.log("Ntfy Topic:", ntfyTopic + "\n");
-  console.log(`Fetching data for event: ${eventName} (${eventId})` + "\n");
+  console.log("Ntfy Topic:", `${ntfyTopic}\n`);
+  console.log(`Fetching data for event: ${eventName} (${eventId})\n`);
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${eventId}`;
 
-  const headers = new Headers({ Cookie: requestCookie });
+  const headers = new Headers({ Cookie: cookieString });
 
   const response = await fetch(url, {
     method: "GET",
@@ -116,7 +127,9 @@ const sendSuccessNotification = (offers) => {
   })
     .then(() => {
       try {
-        offers.forEach((offer) => notifiedOfferIds.add(offer.id));
+        offers.forEach((offer) => {
+          notifiedOfferIds.add(offer.id);
+        });
         saveNotifiedIds();
       } catch (error) {
         console.error("Error saving notified offer IDs:", error);

@@ -18,6 +18,15 @@ const cookieString = await (async () => {
   }
 })();
 
+// Ensure cookie file exists and is not empty
+if (!cookieString || cookieString.trim() === "") {
+  console.error(
+    "Cookie file is missing or empty. Please create a cookie.txt file with your Ticketmaster session cookie."
+  );
+
+  process.exit(1);
+}
+
 if (!fs.existsSync(stateFilePath)) {
   try {
     fs.writeFileSync(stateFilePath, "[]", "utf8");

@@ -1,12 +1,33 @@
+/// <reference types="node" />
+
 import fs from "node:fs";
 import { open } from "node:fs/promises";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+type Params = Record<string, string>;
+
+type Offer = {
+  id: string;
+  quantities: number[];
+};
+
+type ResaleResponse = {
+  offers: Offer[];
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const stateFilePath = path.join(__dirname, "notifiedOffers.json");
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required`);
+  }
+  return value;
+}
 
 // Read full cookie from file
 const cookieString = await (async () => {
@@ -21,7 +42,7 @@ const cookieString = await (async () => {
 // Ensure cookie file exists and is not empty
 if (!cookieString || cookieString.trim() === "") {
   console.error(
-    "Cookie file is missing or empty. Please create a cookie.txt file with your Ticketmaster session cookie."
+    "Cookie file is missing or empty. Please create a cookie.txt file with your Ticketmaster session cookie.",
   );
 
   process.exit(1);
@@ -36,11 +57,11 @@ if (!fs.existsSync(stateFilePath)) {
   }
 }
 
-let notifiedOfferIds = new Set();
+let notifiedOfferIds = new Set<string>();
 
 try {
   const fileData = fs.readFileSync(stateFilePath, "utf8");
-  const ids = JSON.parse(fileData);
+  const ids = JSON.parse(fileData) as string[];
   notifiedOfferIds = new Set(ids);
 } catch (error) {
   console.error("Error reading state file:", error);
@@ -48,9 +69,9 @@ try {
 
 // Command line arguments
 const args = process.argv.slice(2);
-const params = {};
+const params: Params = {};
 
-args.forEach((arg) => {
+args.forEach((arg: string) => {
   const [key, value] = arg.split("=");
   if (key && value) {
     params[key.replace(/^--/, "")] = value;
@@ -59,33 +80,35 @@ args.forEach((arg) => {
 
 const eventId = params.eventId;
 const eventName = params.eventName;
+
+if (!eventId || !eventName) {
+  console.error("Missing required parameters: --eventId and --eventName");
+  process.exit(1);
+}
+
 const eventUrl = `https://www.ticketmaster.dk/event/${eventId}`;
-const ntfyUrlFull = params.ntfyUrl;
 
-if (!eventId || !eventName || !ntfyUrlFull) {
-  console.error("Missing required parameters: eventId, eventName or ntfyUrl");
+let pushoverUserKey: string;
+let pushoverApiToken: string;
+
+try {
+  pushoverUserKey = requireEnv("PUSHOVER_USER_KEY");
+  pushoverApiToken = requireEnv("PUSHOVER_API_TOKEN");
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
 
-const ntfyUrl = new URL(ntfyUrlFull).origin;
-const ntfyTopic = new URL(ntfyUrlFull).pathname.split("/").filter(Boolean)[0];
-
-if (!ntfyTopic) {
-  console.error("Invalid ntfyUrl. Please provide a valid URL with a topic.");
-  process.exit(1);
-}
-
-const saveNotifiedIds = () => {
+const saveNotifiedIds = (): void => {
   fs.writeFileSync(
     stateFilePath,
     JSON.stringify([...notifiedOfferIds]),
-    "utf8"
+    "utf8",
   );
 };
 
-const checkForTickets = async () => {
-  console.log("Ntfy URL:", ntfyUrl);
-  console.log("Ntfy Topic:", `${ntfyTopic}\n`);
+const checkForTickets = async (): Promise<ResaleResponse> => {
+  console.log("Notification provider: Pushover");
   console.log(`Fetching data for event: ${eventName} (${eventId})\n`);
 
   const url = `https://availability.ticketmaster.dk/api/v2/TM_DK/resale/${eventId}`;
@@ -94,7 +117,7 @@ const checkForTickets = async () => {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: headers,
+    headers,
     credentials: "include",
   });
 
@@ -102,11 +125,11 @@ const checkForTickets = async () => {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as ResaleResponse;
   return data;
 };
 
-const sendSuccessNotification = (offers) => {
+const sendSuccessNotification = (offers: Offer[]): void => {
   console.log("Sending notification...");
 
   const totalTickets = offers.reduce((sum, offer) => {
@@ -116,22 +139,18 @@ const sendSuccessNotification = (offers) => {
     totalTickets === 1 ? "" : "TER"
   } TIL SALG?!`;
 
-  fetch(ntfyUrl, {
+  fetch("https://api.pushover.net/1/messages.json", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      topic: ntfyTopic,
+    body: new URLSearchParams({
+      token: pushoverApiToken,
+      user: pushoverUserKey,
       title,
       message: eventName,
-      actions: [
-        {
-          action: "view",
-          label: "Køb for helvede!",
-          url: eventUrl,
-        },
-      ],
+      url: eventUrl,
+      url_title: "Køb billet",
     }),
   })
     .then(() => {
@@ -149,21 +168,22 @@ const sendSuccessNotification = (offers) => {
     });
 };
 
-const sendErrorNotification = (error) => {
+const sendErrorNotification = (error: unknown): void => {
   console.log("Sending error notification...");
 
-  fetch(ntfyUrl, {
+  fetch("https://api.pushover.net/1/messages.json", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      topic: ntfyTopic,
+    body: new URLSearchParams({
+      token: pushoverApiToken,
+      user: pushoverUserKey,
       title: "Error checking tickets",
-      message: `An error occurred while checking tickets for "${eventName}".\n\n${error}`,
+      message: `An error occurred while checking tickets for "${eventName}".\n\n${String(error)}`,
     }),
-  }).catch((error) => {
-    console.error("Error sending error notification:", error);
+  }).catch((notificationError) => {
+    console.error("Error sending error notification:", notificationError);
   });
 };
 
@@ -171,7 +191,7 @@ checkForTickets()
   .then((data) => {
     if (data.offers.length > 0) {
       const newOffers = data.offers.filter(
-        (offer) => !notifiedOfferIds.has(offer.id)
+        (offer) => !notifiedOfferIds.has(offer.id),
       );
 
       if (newOffers.length > 0) {

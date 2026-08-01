@@ -3,7 +3,7 @@
   "name": "ticketmaster-resale-notifier",
   "version": "1.0.0",
   "description": "A script to monitor Ticketmaster resale tickets",
-  "packageManager": "pnpm@10.34.5",
+  "packageManager": "pnpm@11.18.0",
   "main": "script.ts",
   "scripts": {
     "start": "node --env-file=.env --import tsx script.ts",

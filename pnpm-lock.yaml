@@ -9,13 +9,13 @@ importers:
   .:
     devDependencies:
       '@types/node':
-        specifier: ^26.0.0
+        specifier: 26.4.0
         version: 26.4.0
       tsx:
-        specifier: ^4.20.6
+        specifier: 4.23.12
         version: 4.23.12
       typescript:
-        specifier: ^7.0.0
+        specifier: 7.0.2
         version: 7.0.2
 
 packages:
